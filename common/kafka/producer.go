@@ -31,12 +31,12 @@ func NewRelayer() KafkaPubSub {
 	// 	saramaCfg.Net.TLS.Enable = true
 	// }
 
-	client, err := sarama.NewClient([]string{"Brokers"}, saramaCfg)
+	client, err := sarama.NewClient([]string{"localhost:9092"}, saramaCfg)
 	if err != nil {
 		panic(err)
 	}
 
-	consumer, err := sarama.NewConsumerGroupFromClient("Consumergroup", client)
+	consumer, err := sarama.NewConsumerGroupFromClient("myconsumer", client)
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +52,7 @@ func NewRelayer() KafkaPubSub {
 		producer,
 		consumer,
 		client,
-		map[string]string{"2": "config.TopicMapping"},
+		map[string]string{"blinkEvent": "blinkTopic"},
 		map[string][]SubscribeFunc{},
 	}
 	return relayer

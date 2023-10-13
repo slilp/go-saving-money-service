@@ -35,7 +35,7 @@ func (consumer *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 		case message := <-claim.Messages():
 			log.Printf("Message claimed: value = %s, timestamp = %v, topic = %s\n", string(message.Value), message.Timestamp, message.Topic)
 			consumer.Consume(message)
-			log.Printf("COnsumed")
+			log.Printf("Consumed")
 			session.MarkMessage(message, "")
 
 		// Should return when `session.Context()` is done.

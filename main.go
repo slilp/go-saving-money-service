@@ -14,7 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/slilp/go-auth/common/postgres"
 	"github.com/slilp/go-auth/middleware"
+	"github.com/slilp/go-saving-money-service/common/kafka"
 	handler "github.com/slilp/go-saving-money-service/handler/planner"
+	service "github.com/slilp/go-saving-money-service/service/planner"
 	"github.com/spf13/viper"
 )
 
@@ -22,12 +24,14 @@ func main() {
 	initTimeZone()
 	initConfig()
 	router := initGin()
-	initApplication(router)
+	pubsub := kafka.NewRelayer()
+	defer pubsub.Stop()
+	initApplication(router, pubsub)
 	server := runServer(router)
 	shutdownServer(server)
 }
 
-func initApplication(router *gin.Engine) {
+func initApplication(router *gin.Engine, pubsub kafka.KafkaPubSub) {
 
 	router.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
@@ -40,8 +44,13 @@ func initApplication(router *gin.Engine) {
 		panic(fmt.Errorf("failed to create database connection: %w", err))
 	}
 	authMiddleware := middleware.NewJwtMiddleware(viper.GetString("jwt.accessToken"), viper.GetString("jwt.refreshToken"))
-	handler.PlannerInitialize(db, &router.RouterGroup, authMiddleware)
-
+	handler.PlannerInitialize(db, &router.RouterGroup, authMiddleware, pubsub)
+	pubsub.Start()
+	testStr := service.CreateUpdatePlannerDto{
+		Name:   "slil",
+		Target: 111,
+	}
+	pubsub.Publish(context.Background(), "blinkEvent", testStr)
 }
 
 func initGin() *gin.Engine {
